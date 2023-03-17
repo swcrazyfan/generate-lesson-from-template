@@ -89,7 +89,7 @@ def docx_from_generated_content(template_contents, generated_content):
 st.title("Lesson Plan Generator from DOCX Template")
 
 uploaded_file = st.file_uploader("Upload a DOCX file", type=["docx"])
-user_prompt = st.text_input("Enter a prompt to guide the content generation:")
+user_prompt = prompt = st.text_input("Enter a prompt to guide the content generation:")
 
 if st.button("Generate Lesson Plan"):
     if uploaded_file:
