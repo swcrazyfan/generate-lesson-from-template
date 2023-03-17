@@ -13,44 +13,43 @@ def log_to_csv(prompt, generated_content):
         log_writer = csv.writer(log_file)
         log_writer.writerow([datetime.now(), prompt, generated_content])
 
-def extract_contents_from_docx(docx_file):
-    document = docx.Document(docx_file)
-    contents = []
-
-    for block in document._element.body:
-        if block.tag.endswith("tbl"):
-            table = docx.table.Table(block, document)
-            table_text = convert_table_to_text(table)
-            contents.append({"type": "table", "text": table_text})
-        else:
-            for para in block.xpath(".//w:p"):
-                para = docx.text.paragraph.Paragraph(para, document)
-                if para.style.name.startswith("Heading"):
-                    contents.append({"type": "heading", "text": para.text, "style": para.style.name})
-                else:
-                    contents.append({"type": "paragraph", "text": para.text})
-
-    return contents
-
-def convert_table_to_text(table):
-    table_text = ""
-    for row in table.rows:
-        for cell in row.cells:
-            table_text += cell.text + "\t"
-        table_text += "\n"
-    return table_text
-
-def generate_content_from_template(template_contents, user_prompt):
+def generate_content_from_template(user_prompt):
     openai.api_key = os.environ["OPENAI_API_KEY"]
 
-    full_prompt = f"Please generate a lesson plan based on the following template and user prompt:\n\nUser Prompt: {user_prompt}\n\nTemplate:\n\n"
-    for item in template_contents:
-        if item["type"] == "heading":
-            full_prompt += f"\n{item['text']} ({item['style']})\n"
-        elif item["type"] == "paragraph":
-            full_prompt += f"{item['text']} "
-        else:  # item["type"] == "table"
-            full_prompt += "\n[Table]\n" + item["text"]
+    full_prompt = f"""
+Please generate a lesson plan based on the template below, following the user prompt. Modify the template to include specific steps, activities, time allocation, and any additional aspects needed to create a comprehensive lesson plan.
+
+User Prompt: {user_prompt}
+
+Template:
+
+I. Introduction
+- Greetings and warm-up activities
+
+II. Vocabulary/ Grammar
+- Introduce new vocabulary and/or grammar structures
+
+III. Practice Activities
+- Activities to reinforce new vocabulary and/or grammar structures, such as:
+  a. Role-plays
+  b. Reading comprehension exercises
+  c. Listening comprehension exercises
+  d. Writing exercises
+
+IV. Review
+- Review vocabulary and/or grammar covered in the class
+
+V. Reflection
+- Possible reflection questions or activities to encourage students to reflect on what they have learned
+
+VI. Homework
+- Assign homework to reinforce the concepts learned in class
+
+VII. Closing
+- Farewells and class dismissal
+
+Note: The time for activities may vary depending on the level of the class and the complexity of the concepts being taught. Additionally, the lesson plan may include specific materials needed for each activity, such as textbooks, audio or video resources, and worksheets.
+"""
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -73,53 +72,39 @@ def generate_content_from_template(template_contents, user_prompt):
 
     return generated_content
 
-def docx_from_generated_content(template_contents, generated_content):
+def docx_from_generated_content(generated_content):
     document = docx.Document()
 
-    for i, item in enumerate(template_contents):
-        if item["type"] == "heading":
-            document.add_heading(generated_content[i], level=int(item["style"][-1]))
-        elif item["type"] == "paragraph":
-            document.add_paragraph(generated_content[i])
-        else:  # item["type"] == "table"
-    table_data = generated_content[i].strip().split("\n")
-    rows = len(table_data)
-    cols = len(table_data[0].split("\t"))
-    table = document.add_table(rows=rows, cols=cols)
-    for r in range(rows):
-        cells = table.rows[r].cells
-        row_data = table_data[r].split("\t")
-        for c in range(cols):
-            cells[c].text = row_data[c]
+    for i, item in enumerate(generated_content):
+        if i == 0:
+            document.add_heading(item, level=1)
+        else:
+            document.add_heading(item.split("\n")[0], level=2)
+            document.add_paragraph(item.split("\n", 1)[1].strip())
 
     return document
 
-st.title("Lesson Plan Generator from DOCX Template")
+st.title("Lesson Plan Generator")
 
-uploaded_file = st.file_uploader("Upload a DOCX file", type=["docx"])
-user_prompt = prompt = st.text_input("Enter a prompt to guide the content generation:")
+user_prompt = st.text_input("Enter a prompt to guide the content generation:")
 
 if st.button("Generate Lesson Plan"):
-    if uploaded_file:
-        with st.spinner("Generating..."):
-            template_contents = extract_contents_from_docx(uploaded_file)
-            generated_content = generate_content_from_template(template_contents, user_prompt)
+    with st.spinner("Generating..."):
+        generated_content = generate_content_from_template(user_prompt)
 
-            docx_document = docx_from_generated_content(template_contents, generated_content)
+        docx_document = docx_from_generated_content(generated_content)
 
-            buffer = BytesIO()
-            docx_document.save(buffer)
-            buffer.seek(0)
+        buffer = BytesIO()
+        docx_document.save(buffer)
+        buffer.seek(0)
 
-            b64 = base64.b64encode(buffer.getvalue()).decode()
+        b64 = base64.b64encode(buffer.getvalue()).decode()
 
-            st.download_button(
-                label="Download Generated Lesson Plan",
-                data=buffer,
-                file_name=f"generated_lesson_plan.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
+        st.download_button(
+            label="Download Generated Lesson Plan",
+            data=buffer,
+            file_name=f"generated_lesson_plan.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
 
-            log_to_csv(full_prompt, generated_content)
-    else:
-        st.warning("Please upload a DOCX file.")
+        log_to_csv(user_prompt, generated_content)
