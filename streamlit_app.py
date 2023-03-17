@@ -106,7 +106,7 @@ if st.button("Generate Lesson Plan"):
             b64 = base64.b64encode(buffer.getvalue()).decode()
 
             st.download_button(
-                label="Download Generated Lesson Plan as DOCX",
+                label="Download Generated Lesson Plan",
                 data=buffer,
                 file_name=f"generated_lesson_plan.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
