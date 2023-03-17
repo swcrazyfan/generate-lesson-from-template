@@ -82,7 +82,15 @@ def docx_from_generated_content(template_contents, generated_content):
         elif item["type"] == "paragraph":
             document.add_paragraph(generated_content[i])
         else:  # item["type"] == "table"
-            # TODO: Add logic to recreate table structure and add generated content
+    table_data = generated_content[i].strip().split("\n")
+    rows = len(table_data)
+    cols = len(table_data[0].split("\t"))
+    table = document.add_table(rows=rows, cols=cols)
+    for r in range(rows):
+        cells = table.rows[r].cells
+        row_data = table_data[r].split("\t")
+        for c in range(cols):
+            cells[c].text = row_data[c]
 
     return document
 
