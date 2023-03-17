@@ -6,14 +6,7 @@ from datetime import datetime
 import base64
 from io import BytesIO
 import docx
-from htmldocx import HtmlToDocx
 import streamlit.components.v1 as components
-
-def html_to_docx(html_content):
-    document = Document()
-    parser = HtmlToDocx()
-    parser.add_html_to_document(html_content, document)
-    return document
 
 def log_to_csv(prompt, generated_content):
     with open("lesson_plan_logs.csv", mode="a", newline="", encoding="utf-8") as log_file:
@@ -27,8 +20,8 @@ def extract_contents_from_docx(docx_file):
     for block in document._element.body:
         if block.tag.endswith("tbl"):
             table = docx.table.Table(block, document)
-            table_html = convert(table)
-            contents.append({"type": "table", "html": table_html})
+            table_text = convert_table_to_text(table)
+            contents.append({"type": "table", "text": table_text})
         else:
             for para in block.xpath(".//w:p"):
                 para = docx.text.paragraph.Paragraph(para, document)
@@ -38,6 +31,14 @@ def extract_contents_from_docx(docx_file):
                     contents.append({"type": "paragraph", "text": para.text})
 
     return contents
+
+def convert_table_to_text(table):
+    table_text = ""
+    for row in table.rows:
+        for cell in row.cells:
+            table_text += cell.text + "\t"
+        table_text += "\n"
+    return table_text
 
 def generate_content_from_template(template_contents, user_prompt):
     openai.api_key = os.environ["OPENAI_API_KEY"]
@@ -49,7 +50,7 @@ def generate_content_from_template(template_contents, user_prompt):
         elif item["type"] == "paragraph":
             full_prompt += f"{item['text']} "
         else:  # item["type"] == "table"
-            full_prompt += "\n[Table]\n"
+            full_prompt += "\n[Table]\n" + item["text"]
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -68,11 +69,22 @@ def generate_content_from_template(template_contents, user_prompt):
         temperature=0.7,
     )
 
-    html_content = response["choices"][0]["message"]["content"]
+    generated_content = response["choices"][0]["message"]["content"].split("\n\n")
 
-    log_to_csv(full_prompt, html_content)
+    return generated_content
 
-    return html_content
+def docx_from_generated_content(template_contents, generated_content):
+    document = docx.Document()
+
+    for i, item in enumerate(template_contents):
+        if item["type"] == "heading":
+            document.add_heading(generated_content[i], level=int(item["style"][-1]))
+        elif item["type"] == "paragraph":
+            document.add_paragraph(generated_content[i])
+        else:  # item["type"] == "table"
+            # TODO: Add logic to recreate table structure and add generated content
+
+    return document
 
 st.title("Lesson Plan Generator from DOCX Template")
 
@@ -85,10 +97,7 @@ if st.button("Generate Lesson Plan"):
             template_contents = extract_contents_from_docx(uploaded_file)
             generated_content = generate_content_from_template(template_contents, user_prompt)
 
-            styled_html = f'<div style="background-color: black; color: white;">{generated_content}</div>'
-            components.html(styled_html, height=600, scrolling=True)
-
-            docx_document = html_to_docx(generated_content)
+            docx_document = docx_from_generated_content(template_contents, generated_content)
 
             buffer = BytesIO()
             docx_document.save(buffer)
