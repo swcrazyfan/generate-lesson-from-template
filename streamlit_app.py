@@ -16,40 +16,18 @@ def log_to_csv(prompt, generated_content):
 def generate_content_from_template(user_prompt):
     openai.api_key = os.environ["OPENAI_API_KEY"]
 
-    full_prompt = f"""
-Please generate a lesson plan based on the template below, following the user prompt. Modify the template to include specific steps, activities, time allocation, and any additional aspects needed to create a comprehensive lesson plan.
+    abbreviations = {
+        "Intro": "Introduction",
+        "Vocab/Grammar": "Vocabulary/ Grammar",
+        "Practice": "Practice Activities",
+        "Review": "Review",
+        "Reflection": "Reflection",
+        "Homework": "Homework",
+        "Closing": "Closing",
+    }
 
-User Prompt: {user_prompt}
-
-Template:
-
-I. Introduction
-- Greetings and warm-up activities
-
-II. Vocabulary/ Grammar
-- Introduce new vocabulary and/or grammar structures
-
-III. Practice Activities
-- Activities to reinforce new vocabulary and/or grammar structures, such as:
-  a. Role-plays
-  b. Reading comprehension exercises
-  c. Listening comprehension exercises
-  d. Writing exercises
-
-IV. Review
-- Review vocabulary and/or grammar covered in the class
-
-V. Reflection
-- Possible reflection questions or activities to encourage students to reflect on what they have learned
-
-VI. Homework
-- Assign homework to reinforce the concepts learned in class
-
-VII. Closing
-- Farewells and class dismissal
-
-Note: The time for activities may vary depending on the level of the class and the complexity of the concepts being taught. Additionally, the lesson plan may include specific materials needed for each activity, such as textbooks, audio or video resources, and worksheets.
-"""
+    short_template = "\n".join([f"{i+1}. {abbr}" for i, abbr in enumerate(abbreviations.keys())]) + "\n\nNote: <T> <M>"
+    full_prompt = f"Generate a lesson plan based on the template. Modify it per the user prompt: {user_prompt}\n\nTemplate:\n\n{short_template}"
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -70,7 +48,13 @@ Note: The time for activities may vary depending on the level of the class and t
 
     generated_content = response["choices"][0]["message"]["content"].split("\n\n")
 
+    # Replace abbreviations with their full forms
+    for i, item in enumerate(generated_content):
+        for abbr, full in abbreviations.items():
+            generated_content[i] = item.replace(abbr, full)
+
     return generated_content
+
 
 def docx_from_generated_content(generated_content):
     document = docx.Document()
@@ -100,10 +84,16 @@ if st.button("Generate Lesson Plan"):
 
         b64 = base64.b64encode(buffer.getvalue()).decode()
 
+        lesson_name = "generated_lesson_plan"
+        for line in generated_content:
+            if line.startswith("Lesson Name:"):
+                lesson_name = line.split("Lesson Name:")[1].strip()
+                break
+
         st.download_button(
             label="Download Generated Lesson Plan",
             data=buffer,
-            file_name=f"generated_lesson_plan.docx",
+            file_name=f"{lesson_name}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
