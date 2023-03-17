@@ -18,7 +18,7 @@ def generate_content_from_template(user_prompt):
 	
 	abbreviations = {
 		"Intro": "Introduction",
-		"Vocab/Grammar": "Vocabulary/Grammar",
+#		"Vocab/Grammar": "Vocabulary/Grammar",
 		"Practice": "Practice Activities",
 		"Review": "Review",
 		"Reflection": "Reflection",
@@ -28,7 +28,7 @@ def generate_content_from_template(user_prompt):
 	
 	placeholders = {
 		"<TIME>": "The time for activities may vary depending on the level of the class and the complexity of the concepts being taught.",
-		"<MATERIALS>": "The lesson plan may include specific materials needed for each activity, such as textbooks, audio or video resources, and worksheets.",
+		"<MATERIALS>": "(Replace this section to include specific materials needed for each activity, such as textbooks, audio or video resources, and worksheets.)",
 		"<TITLE>": "Title:",
 		"<CLASS_NAME>": "Class Name:",
 		"<CLASS_LEVEL>": "Class Level:",
