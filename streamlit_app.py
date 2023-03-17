@@ -40,7 +40,7 @@ def generate_content_from_template(user_prompt):
 
 	full_prompt = f"Generate a lesson plan based on the template. Modify it per the user prompt: {user_prompt}\n\nTemplate:\n\n{short_template}"
 	
-	response = openai.Completion.create(
+	response = openai.ChatCompletion.create(
 		model="gpt-3.5-turbo",
 		messages=[
 			{
@@ -54,7 +54,7 @@ def generate_content_from_template(user_prompt):
 		max_tokens=2000,
 		n=1,
 		stop=None,
-		temperature=0.7,
+		temperature=0.8,
 	)
 
 	generated_content = response["choices"][0]["message"]["content"].split("\n\n")
