@@ -69,22 +69,22 @@ def generate_content_from_template(user_prompt):
 	return generated_content
 
 def docx_from_generated_content(generated_content):
-	document = docx.Document()
+    document = docx.Document()
 
-	for i, item in enumerate(generated_content):
-		if i == 0:
-			document.add_heading(item, level=1)
-		else:
-			heading_and_text = item.split("\n", 1)
-			if len(heading_and_text) == 2:
-				heading, text = heading_and_text
-				document.add_heading(heading, level=2)
-				document.add_paragraph(text.strip())
-			elif len(heading_and_text) == 1 and heading_and_text[0].strip():
-				# Only add non-empty strings as paragraphs
-				document.add_paragraph(heading_and_text[0].strip())
+    for i, item in enumerate(generated_content):
+        if i == 0:
+            document.add_heading(item, level=1)
+        else:
+            heading_and_text = item.split("\n", 1)
+            if len(heading_and_text) == 2:
+                heading, text = heading_and_text
+                document.add_heading(heading, level=2)
+                document.add_paragraph(text.strip())
+            elif len(heading_and_text) == 1 and heading_and_text[0].strip():
+                # Only add non-empty strings as paragraphs
+                document.add_paragraph(heading_and_text[0].strip())
 
-	return document
+    return document
 
 
 st.title("Lesson Plan Generator")
@@ -92,28 +92,28 @@ st.title("Lesson Plan Generator")
 user_prompt = st.text_input("Enter a prompt to guide the content generation:")
 
 if st.button("Generate Lesson Plan"):
-	with st.spinner("Generating..."):
-		generated_content = generate_content_from_template(user_prompt)
+    with st.spinner("Generating..."):
+        generated_content = generate_content_from_template(user_prompt)
 
-		docx_document = docx_from_generated_content(generated_content)
+        docx_document = docx_from_generated_content(generated_content)
 
-		buffer = BytesIO()
-		docx_document.save(buffer)
-		buffer.seek(0)
+        buffer = BytesIO()
+        docx_document.save(buffer)
+        buffer.seek(0)
 
-		b64 = base64.b64encode(buffer.getvalue()).decode()
+        b64 = base64.b64encode(buffer.getvalue()).decode()
 
-		lesson_name = "generated_lesson_plan"
-		for line in generated_content:
-			if line.startswith("Title:"):
-				lesson_name = lesson_name.split("\n")[0]
-				break
+        lesson_name = "generated_lesson_plan"
+        for line in generated_content:
+            if line.startswith("Title:"):
+                lesson_name = lesson_name.split("\n")[0]
+                break
 
-		st.download_button(
-			label="Download Generated Lesson Plan",
-			data=buffer,
-			file_name=f"{lesson_name.replace('\n', ' ')}.docx",
-			mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		)
+        st.download_button(
+            label="Download Generated Lesson Plan",
+            data=buffer,
+            file_name=f"{lesson_name}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
 
-		log_to_csv(user_prompt, generated_content)
+        log_to_csv(user_prompt, generated_content)
