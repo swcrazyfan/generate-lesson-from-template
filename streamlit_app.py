@@ -8,7 +8,6 @@ from io import BytesIO
 import docx
 from htmldocx import HtmlToDocx
 import streamlit.components.v1 as components
-from docx2html import convert
 
 def html_to_docx(html_content):
     document = Document()
