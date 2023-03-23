@@ -14,31 +14,18 @@ def log_to_csv(prompt, generated_content):
 		log_writer.writerow([datetime.now(), prompt, generated_content])
 
 def generate_content_from_template(user_prompt):
-	openai.api_key = os.environ["OPENAI_API_KEY"]
-	
-	abbreviations = {
-		"Intro": "Introduction",
-#		"Vocab/Grammar": "Vocabulary/Grammar",
-		"Practice": "Practice Activities",
-		"Review": "Review",
-		"Reflection": "Reflection",
-		"Homework": "Homework",
-		"Closing": "Closing",
-	}
-	
-	placeholders = {
-		"<TIME>": "The time for activities may vary depending on the level of the class and the complexity of the concepts being taught.",
-		"<MATERIALS>": "(Replace this section to include specific materials needed for each activity, such as textbooks, audio or video resources, and worksheets.)",
-		"<TITLE>": "Title:",
-		"<CLASS_NAME>": "Class Name:",
-		"<CLASS_LEVEL>": "Class Level:",
-		"<GOALS>": "Lesson Goals:",
-	}
+    	openai.api_key = os.environ["OPENAI_API_KEY"]
 
-	short_template = "<TITLE> (est. time: <TIME>)\n<CLASS_NAME>\n<CLASS_LEVEL>\n<MATERIALS>\n<GOALS>\n\n"
-	short_template += "\n".join([f"{i+1}. {abbreviations[abbr]} (est. time: <TIME_{abbr}>)" for i, abbr in enumerate(abbreviations.keys())]) + "\n\nNote: The time for activities may vary depending on the level of the class and the complexity of the concepts being taught."
-
-	full_prompt = f"Generate a lesson plan based on the template. Modify it per the user prompt: {user_prompt}\n\nTemplate:\n\n{short_template}"
+   	 full_prompt = (
+        "Generate a well-structured lesson plan based on the user's input. Replace # with the correct enumeration.\n\n"
+        f"Prompt: {user_prompt}\n\n"
+        "Title (Total Estimated Time):\n"
+        "#. Objective:\n"
+        "#. Steps: Organize lesson plan activities under Steps as sub-sections. Each activity should contain estimated time, materials (if applicable), specific steps (using numbered list), and 1 reflection question. Be conservative with time estimates meaning overestimate or give a range.\n"
+        "#.Closing:\n"
+        "#. Materials: List any materials mentioned in the lesson plan.\n\n"
+        "Ensure that the formatting and structure of the generated content are compatible with python-docx, and adhere to the standard Microsoft Word list format ('1., a., i.') for enumerating the sections, activities, and steps."
+   	 )
 	
 	response = openai.ChatCompletion.create(
 		model="gpt-3.5-turbo",
