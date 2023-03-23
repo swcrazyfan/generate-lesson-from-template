@@ -27,16 +27,25 @@ def generate_content_from_template(user_prompt):
         "Ensure that the formatting and structure of the generated content are compatible with python-docx, and adhere to the standard Microsoft Word list format ('1., a., i.') for enumerating the sections, activities, and steps."
     )
 
-    response = openai.Completion.create(
-        engine="davinci",
-        prompt=full_prompt,
-        max_tokens=2000,
-        n=1,
-        stop=None,
-        temperature=0.8,
-    )
-
-    generated_content = response.choices[0].text.split("\n\n")
+    response = openai.ChatCompletion.create(
+		model="gpt-3.5-turbo",
+		messages=[
+			{
+				"role": "system",
+				"content": (
+					"You are a helpful assistant that can generate lesson plans based on a template and user prompt."
+				),
+			},
+			{"role": "user", "content": full_prompt},
+		],
+		max_tokens=500,
+		n=1,
+		stop=None,
+		temperature=0.8,
+		top_p=0.9,
+		)
+	
+    generated_content = response["choices"][0]["message"]["content"].split("\n\n")
 
     return generated_content
 
