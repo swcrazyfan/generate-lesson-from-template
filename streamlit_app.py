@@ -77,22 +77,14 @@ if st.button("Generate Lesson Plan"):
 
         docx_document = docx_from_generated_content(generated_content)
 
-        with tempfile.NamedTemporaryFile(suffix=".docx") as temp:
-            docx_document.save(temp.name)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmpfile:
+            docx_document.save(tmpfile.name)
 
-        b64 = base64.b64encode(buffer.getvalue()).decode()
-
-        lesson_name = "generated_lesson_plan"
-        for line in generated_content:
-            if line.startswith("Title:"):
-                lesson_name = line.split(":")[1].strip()
-                break
-
-        st.download_button(
-            label="Download Generated Lesson Plan",
-            data=b64,
-            file_name=f"{lesson_name}.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        )
+            st.download_button(
+                label="Download Generated Lesson Plan",
+                data=tmpfile.name,
+                file_name=f"{lesson_name}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
 
         log_to_csv(user_prompt, generated_content)
