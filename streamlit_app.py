@@ -9,9 +9,9 @@ import docx
 import streamlit.components.v1 as components
 
 def log_to_csv(prompt, generated_content):
-	with open("lesson_plan_logs.csv", mode="a", newline="", encoding="utf-8") as log_file:
-		log_writer = csv.writer(log_file)
-		log_writer.writerow([datetime.now(), prompt, generated_content])
+    with open("lesson_plan_logs.csv", mode="a", newline="", encoding="utf-8") as log_file:
+        log_writer = csv.writer(log_file)
+        log_writer.writerow([datetime.now(), prompt, generated_content])
 
 def generate_content_from_template(user_prompt):
     openai.api_key = os.environ["OPENAI_API_KEY"]
@@ -26,34 +26,19 @@ def generate_content_from_template(user_prompt):
         "#. Materials: List any materials mentioned in the lesson plan.\n\n"
         "Ensure that the formatting and structure of the generated content are compatible with python-docx, and adhere to the standard Microsoft Word list format ('1., a., i.') for enumerating the sections, activities, and steps."
     )
-	
-	response = openai.ChatCompletion.create(
-		model="gpt-3.5-turbo",
-		messages=[
-			{
-				"role": "system",
-				"content": (
-					"You are a helpful assistant that can generate lesson plans based on a template and user prompt."
-				),
-			},
-			{"role": "user", "content": full_prompt},
-		],
-		max_tokens=2000,
-		n=1,
-		stop=None,
-		temperature=0.8,
-	)
 
-	generated_content = response["choices"][0]["message"]["content"].split("\n\n")
+    response = openai.Completion.create(
+        engine="davinci",
+        prompt=full_prompt,
+        max_tokens=2000,
+        n=1,
+        stop=None,
+        temperature=0.8,
+    )
 
-	# Replace abbreviations and placeholders with their full forms
-	for i, item in enumerate(generated_content):
-		for abbr, full in abbreviations.items():
-			generated_content[i] = item.replace(abbr, full)
-		for placeholder, replacement in placeholders.items():
-			generated_content[i] = generated_content[i].replace(placeholder, replacement)
+    generated_content = response.choices[0].text.split("\n\n")
 
-	return generated_content
+    return generated_content
 
 def docx_from_generated_content(generated_content):
     document = docx.Document()
@@ -93,12 +78,12 @@ if st.button("Generate Lesson Plan"):
         lesson_name = "generated_lesson_plan"
         for line in generated_content:
             if line.startswith("Title:"):
-                lesson_name = lesson_name.split("\n")[0]
+                lesson_name = line.split(":")[1].strip()
                 break
 
         st.download_button(
             label="Download Generated Lesson Plan",
-            data=buffer,
+            data=b64,
             file_name=f"{lesson_name}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
