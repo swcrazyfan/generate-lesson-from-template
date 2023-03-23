@@ -14,9 +14,9 @@ def log_to_csv(prompt, generated_content):
 		log_writer.writerow([datetime.now(), prompt, generated_content])
 
 def generate_content_from_template(user_prompt):
-    	openai.api_key = os.environ["OPENAI_API_KEY"]
+    openai.api_key = os.environ["OPENAI_API_KEY"]
 
-   	 full_prompt = (
+    full_prompt = (
         "Generate a well-structured lesson plan based on the user's input. Replace # with the correct enumeration.\n\n"
         f"Prompt: {user_prompt}\n\n"
         "Title (Total Estimated Time):\n"
@@ -25,7 +25,7 @@ def generate_content_from_template(user_prompt):
         "#.Closing:\n"
         "#. Materials: List any materials mentioned in the lesson plan.\n\n"
         "Ensure that the formatting and structure of the generated content are compatible with python-docx, and adhere to the standard Microsoft Word list format ('1., a., i.') for enumerating the sections, activities, and steps."
-   	 )
+    )
 	
 	response = openai.ChatCompletion.create(
 		model="gpt-3.5-turbo",
