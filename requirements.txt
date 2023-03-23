@@ -3,3 +3,4 @@ streamlit
 python-docx
 htmldocx
 pandas
+tempfile
