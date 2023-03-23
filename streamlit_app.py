@@ -3,8 +3,7 @@ import os
 import streamlit as st
 import csv
 from datetime import datetime
-import base64
-from io import BytesIO
+import tempfile
 import docx
 import streamlit.components.v1 as components
 
@@ -78,9 +77,8 @@ if st.button("Generate Lesson Plan"):
 
         docx_document = docx_from_generated_content(generated_content)
 
-        buffer = BytesIO()
-        docx_document.save(buffer)
-        buffer.seek(0)
+        with tempfile.NamedTemporaryFile(suffix=".docx") as temp:
+            docx_document.save(temp.name)
 
         b64 = base64.b64encode(buffer.getvalue()).decode()
 
