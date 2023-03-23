@@ -3,7 +3,8 @@ import os
 import streamlit as st
 import csv
 from datetime import datetime
-import tempfile
+import base64
+from io import BytesIO
 import docx
 import streamlit.components.v1 as components
 
@@ -77,14 +78,23 @@ if st.button("Generate Lesson Plan"):
 
         docx_document = docx_from_generated_content(generated_content)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmpfile:
-            docx_document.save(tmpfile.name)
+        buffer = BytesIO()
+        docx_document.save(buffer)
+        buffer.seek(0)
 
-            st.download_button(
-                label="Download Generated Lesson Plan",
-                data=tmpfile.name,
-                file_name=f"{lesson_name}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
+        b64 = base64.b64encode(buffer.getvalue()).decode()
+
+        lesson_name = "generated_lesson_plan"
+        for line in generated_content:
+            if line.startswith("Title:"):
+                lesson_name = line.split(":")[1].strip()
+                break
+
+        st.download_button(
+            label="Download Generated Lesson Plan",
+            data=buffer,
+            file_name=f"{lesson_name}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
 
         log_to_csv(user_prompt, generated_content)
