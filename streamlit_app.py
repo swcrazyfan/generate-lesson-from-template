@@ -28,23 +28,23 @@ def generate_content_from_template(user_prompt):
     )
 
     response = openai.ChatCompletion.create(
-		model="gpt-3.5-turbo",
-		messages=[
-			{
-				"role": "system",
-				"content": (
-					"You are a helpful assistant that can generate lesson plans based on a template and user prompt."
-				),
-			},
-			{"role": "user", "content": full_prompt},
-		],
-		max_tokens=500,
-		n=1,
-		stop=None,
-		temperature=0.8,
-		top_p=0.9,
-		)
-	
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant that can generate lesson plans based on a template and user prompt."
+                ),
+            },
+            {"role": "user", "content": full_prompt},
+        ],
+        max_tokens=500,
+        n=1,
+        stop=None,
+        temperature=0.8,
+        top_p=0.9,
+        )
+    
     generated_content = response["choices"][0]["message"]["content"].split("\n\n")
 
     return generated_content
